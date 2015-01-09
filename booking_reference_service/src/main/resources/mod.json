@@ -1,5 +1,5 @@
 {
-  "main": "groovy:trains.bookingref.BookingReferenceService",
+  "main": "trains.bookingref.BookingReferenceService",
 
   "auto-redeploy": true
 }

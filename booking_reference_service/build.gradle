@@ -72,7 +72,6 @@ import org.vertx.java.platform.impl.cli.Starter
  */
 
 apply plugin: 'java'
-apply plugin: 'groovy'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 
@@ -109,7 +108,7 @@ sourceSets {
 
 task copyMod( type:Copy, dependsOn: 'classes', description: 'Assemble the module into the local mods directory' ) {
   into "build/mods/$moduleName"
-  from compileGroovy
+  from compileJava
   from 'src/main/resources'
   into ('lib') {
     from configurations.provided
