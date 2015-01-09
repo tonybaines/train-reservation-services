@@ -1,0 +1,160 @@
+/*
+Usage:
+./gradlew task_name
+(or gradlew.bat task_name if you have the misfortune to have to use Windows)
+If no task name is specified then the default task 'assemble' is run
+Task names are:
+idea - generate a skeleton IntelliJ IDEA project
+eclipse - generate a skeleton Eclipse IDE project
+copyMod - builds and copies the module to the local 'mods' directory so you can execute vertx runmod (etc) directly from the command line
+modZip - creates the module zip into build/libs
+clean - cleans everything up
+runMod - runs the module. This is similar to executing vertx runmod from the command line except that it does
+not use the version of Vert.x installed and on the PATH to run it. Instead it uses the version of Vert.x
+that the module was compiled and tested against.
+pullInDeps - pulls in all dependencies of the module into a nested module directory
+*/
+
+
+// This sets up the classpath for the script itself
+buildscript {
+
+  repositories {
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+    mavenCentral()
+  }
+
+  dependencies {
+    classpath "io.vertx:vertx-core:$vertxVersion"
+    classpath "io.vertx:vertx-platform:$vertxVersion"
+    classpath "io.vertx:vertx-hazelcast:$vertxVersion"
+
+    // Extra classpath for Vert.x
+
+    // Users can be Vert.x platform classpath files (e.g. langs.properties) in either src/main/platform_lib
+    // or src/main/resources/platform_lib (if they want it in the module for fatjars)
+    classpath files(['src/main/platform_lib'])
+    classpath fileTree(dir: 'src/main/platform_lib', includes: ['*.jar', '*.zip'])
+    classpath files(['src/main/resources/platform_lib'])
+    classpath fileTree(dir: 'src/main/resources/platform_lib', includes: ['*.jar', '*.zip'])
+  }
+}
+
+/*
+Module structure
+  module-name
+    |-lib
+    |  |- dependency1.jar
+    |
+    |- mod.json
+    |
+    \- mypackage
+        |- myclass1.class
+        \- myclass2.class
+ */
+
+
+import org.vertx.java.platform.impl.cli.Starter
+
+/*
+ * Copyright 2012 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+apply plugin: 'java'
+apply plugin: 'groovy'
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+
+group = modowner
+archivesBaseName = modname
+
+defaultTasks = ['runMod']
+
+sourceCompatibility = '1.7'
+targetCompatibility = '1.7'
+
+project.ext.moduleName = "$modowner~$modname~$version"
+
+configurations {
+  provided
+  testCompile.extendsFrom provided
+}
+
+repositories {
+  maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+  mavenCentral()
+}
+
+dependencies {
+  provided "org.codehaus.groovy:groovy-all:$groovyVersion"
+  provided "io.vertx:lang-groovy:$groovyLangModVersion@jar"
+  provided "io.vertx:vertx-core:$vertxVersion"
+  provided "io.vertx:vertx-platform:$vertxVersion"
+}
+
+sourceSets {
+  main {
+    compileClasspath = compileClasspath + configurations.provided
+  }
+}
+
+task copyMod( type:Copy, dependsOn: 'classes', description: 'Assemble the module into the local mods directory' ) {
+  into "build/mods/$moduleName"
+  from compileGroovy
+  from 'src/main/resources'
+  into ('lib') {
+    from configurations.provided
+  }
+}
+
+task collectDeps(type: Copy) {
+  destinationDir = file("build")
+  into("deps") {
+    from configurations.provided
+  }
+}
+
+/** These tasks are call-outs to the Vert.x utility 'Starter' **/
+
+task runMod(description: 'Run the module', dependsOn: [pullInDeps]) << {
+  setSysProps()
+  // We also init here - this means for single module builds the user doesn't have to explicitly init -
+  // they can just do runMod
+  doInit()
+  def runModArgs = ['runmod', moduleName]
+  Starter.main(runModArgs as String[])
+}
+
+def doInit() {
+  File cpFile = new File("vertx_classpath.txt")
+  if (!cpFile.exists()) {
+    cpFile.createNewFile();
+    String defaultCp = "build/deps\r\n";
+    cpFile << defaultCp;
+  }
+  def args = ['create-module-link', moduleName, '-cp', 'build/deps']
+  Starter.main(args as String[])
+}
+
+task pullInDeps(dependsOn: [copyMod, collectDeps], description: 'Pull in all the module dependencies for the module into the nested mods directory') << {
+  setSysProps()
+  def args = ['pulldeps', moduleName]
+  Starter.main(args as String[])
+}
+
+def setSysProps() {
+  System.setProperty("vertx.clusterManagerFactory", "org.vertx.java.spi.cluster.impl.hazelcast.HazelcastClusterManagerFactory")
+  System.setProperty("vertx.mods", "${project.buildDir}/mods")
+}
