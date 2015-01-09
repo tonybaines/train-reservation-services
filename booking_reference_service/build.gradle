@@ -27,7 +27,6 @@ buildscript {
   dependencies {
     classpath "io.vertx:vertx-core:$vertxVersion"
     classpath "io.vertx:vertx-platform:$vertxVersion"
-    classpath "io.vertx:vertx-hazelcast:$vertxVersion"
 
     // Extra classpath for Vert.x
 
@@ -98,8 +97,6 @@ repositories {
 }
 
 dependencies {
-  provided "org.codehaus.groovy:groovy-all:$groovyVersion"
-  provided "io.vertx:lang-groovy:$groovyLangModVersion@jar"
   provided "io.vertx:vertx-core:$vertxVersion"
   provided "io.vertx:vertx-platform:$vertxVersion"
 }
