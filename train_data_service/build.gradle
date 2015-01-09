@@ -128,6 +128,12 @@ task collectDeps(type: Copy) {
 
 /** These tasks are call-outs to the Vert.x utility 'Starter' **/
 
+task pullInDeps(dependsOn: [copyMod, collectDeps], description: 'Pull in all the module dependencies for the module into the nested mods directory') << {
+  setSysProps()
+  def args = ['pulldeps', moduleName]
+  Starter.main(args as String[])
+}
+
 task runMod(description: 'Run the module', dependsOn: [pullInDeps]) << {
   setSysProps()
   // We also init here - this means for single module builds the user doesn't have to explicitly init -
@@ -148,13 +154,11 @@ def doInit() {
   Starter.main(args as String[])
 }
 
-task pullInDeps(dependsOn: [copyMod, collectDeps], description: 'Pull in all the module dependencies for the module into the nested mods directory') << {
-  setSysProps()
-  def args = ['pulldeps', moduleName]
-  Starter.main(args as String[])
-}
-
 def setSysProps() {
   System.setProperty("vertx.clusterManagerFactory", "org.vertx.java.spi.cluster.impl.hazelcast.HazelcastClusterManagerFactory")
   System.setProperty("vertx.mods", "${project.buildDir}/mods")
+}
+
+task wrapper(type: Wrapper) {
+  gradleVersion = '2.2'
 }
