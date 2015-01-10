@@ -1,4 +1,6 @@
-*/build
-*/.gradle
-*/vertx_classpath.txt
+**/build
+**/.gradle
+**/vertx_classpath.txt
+**/*.i??
+out
 .idea
