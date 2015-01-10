@@ -1,5 +1,5 @@
 {
-  "main": "groovy:trains.data.TrainDataService",
+  "main": "trains.data.TrainDataService",
 
   "auto-redeploy": true
 }
