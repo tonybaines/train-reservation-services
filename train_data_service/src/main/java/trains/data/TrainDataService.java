@@ -11,13 +11,14 @@ import org.vertx.java.platform.Verticle;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.util.Iterator;
+import java.util.Map;
 
 public class TrainDataService extends Verticle {
 
   public static final int BAD_REQUEST = 400;
   public static final int NOT_FOUND = 404;
   public static final int CONFLICT = 409;
-
 
   @Override
   public void start() {
@@ -43,6 +44,7 @@ public class TrainDataService extends Verticle {
     rm.get("/data_for_train/:trainId", new Handler<HttpServerRequest>() {
       public void handle(HttpServerRequest req) {
         String trainId = req.params().get("trainId");
+        container.logger().warn("Handling a request for /data_for_train/" + trainId);
         req.response().putHeader("Content-Type", "application/json");
         if (data.has(trainId)) {
           req.response().end(prettyJsonFrom(data.get(trainId)));
@@ -52,156 +54,102 @@ public class TrainDataService extends Verticle {
       }
     });
 
-
+    /*
+    To reserve seats on a train, you'll need to make a POST request to this url:
+    http://localhost:8081/reserve
+    and attach form data for which seats to reserve. There should be three fields:
+    "train_id", "seats", "booking_reference"
+    The "seats" field should be a json encoded list of seat ids, for example:
+    '["1A", "2A"]'
+    The other two fields are ordinary strings. Note the server will prevent you
+    from booking a seat that is already reserved with another booking reference.
+    */
     rm.post("/reserve", new Handler<HttpServerRequest>() {
       public void handle(final HttpServerRequest req) {
-        log("Got a POST to reserve");
-        req.expectMultiPart(true);
-        req.endHandler(new VoidHandler() {
+        container.logger().warn("Handling a request for /reserve");
+
+        req.expectMultiPart(true).endHandler(new VoidHandler() {
           public void handle() {
-            final MultiMap attrs = req.formAttributes();
-            final String trainId = attrs.get("train_id");
-            final String seatsJson = attrs.get("seats");
-            final String bookingRef = attrs.get("booking_reference");
+            try {
+              final MultiMap attrs = req.formAttributes();
+              final String trainId = attrs.get("train_id");
+              final String seatsJson = attrs.get("seats");
+              final String bookingRef = attrs.get("booking_reference");
 
-            req.response().putHeader("Content-Type", "application/json");
+              req.response().putHeader("Content-Type", "application/json");
 
-            // Validate the request
-            if (emptyOrNull(trainId, seatsJson, bookingRef)) {
-              error(req.response(), String.format("One or more request attributes missing: [train_id=%s, seats=%s, booking_reference=%s]", trainId, seatsJson, bookingRef), BAD_REQUEST);
-            } else if (!data.has(trainId)) {
-              error(req.response(), String.format("Train with ID %s was not found", trainId), NOT_FOUND);
-            }
-
-
-            JsonObject trainData = data.get(trainId).getAsJsonObject();
-            JsonArray seats = new JsonParser().parse(seatsJson).getAsJsonArray();
-
-            // Validate the reservation details
-            while (seats.iterator().hasNext()) {
-              String seat = seats.iterator().next().getAsString();
-              if (trainData.getAsJsonObject("seats").has(seat)) {
-                String existingReservation = trainData.getAsJsonObject("seats").getAsJsonObject(seat).get("booking_reference").getAsString();
-                if (existingReservation != "" && !(existingReservation.equals(bookingRef))) {
-                  error(req.response(), String.format("%s on %s already booked with reference:  %s", seat, trainId, bookingRef), CONFLICT);
-                  return;
-                }
-              } else {
-                error(req.response(), String.format("seat not found %s", seat), NOT_FOUND);
+              // Validate the request
+              if (emptyOrNull(trainId, seatsJson, bookingRef)) {
+                error(req.response(), String.format("One or more request attributes missing: [train_id=%s, seats=%s, booking_reference=%s]", trainId, seatsJson, bookingRef), BAD_REQUEST);
+                return;
+              } else if (!data.has(trainId)) {
+                error(req.response(), String.format("Train with ID %s was not found", trainId), NOT_FOUND);
                 return;
               }
+
+
+              JsonObject trainData = data.get(trainId).getAsJsonObject();
+              JsonArray seats = new JsonParser().parse(seatsJson).getAsJsonArray();
+
+              // Validate the reservation details
+              Iterator<JsonElement> seatsIterator = seats.iterator();
+              while (seatsIterator.hasNext()) {
+                String seat = seatsIterator.next().getAsString();
+                if (trainData.getAsJsonObject("seats").has(seat)) {
+                  String existingReservation = trainData.getAsJsonObject("seats").getAsJsonObject(seat).get("booking_reference").getAsString();
+                  if (!"".equals(existingReservation) && !(existingReservation.equals(bookingRef))) {
+                    error(req.response(), String.format("%s on %s is already booked with reference:  %s", seat, trainId, bookingRef), CONFLICT);
+                    return;
+                  }
+                } else {
+                  error(req.response(), String.format("seat not found %s", seat), NOT_FOUND);
+                  return;
+                }
+              }
+
+              // Update the reservation data
+              seatsIterator = seats.iterator();
+              while (seatsIterator.hasNext()) {
+                String seat = seatsIterator.next().getAsString();
+                trainData.getAsJsonObject("seats").getAsJsonObject(seat).addProperty("booking_reference", bookingRef);
+              }
+
+              req.response().end(prettyJsonFrom(data.get(trainId)));
+            } catch (IllegalStateException e) {
+              // This is a difficult error to diagnose from the client otherwise
+              error(req.response(), "No multi-part form attributes supplied in the request body", BAD_REQUEST);
             }
-
-            // Update the reservation data
-
           }
         });
-
-
       }
     });
-    //      HttpServerRequest req ->
-    //
-    //          // Update the reservation data
-    //          seats.each { data[trainId]["seats"][it]["booking_reference"] = bookingRef }
-    //
-    //          req.response.end prettyJsonFrom(data[trainId])
-    //        }
-    //    }
+
+    /*
+    Remove all reservations on a particular train. Use it with care:
+    http://localhost:8081/reset/express_2000
+    */
+    rm.get("/reset/:trainId", new Handler<HttpServerRequest>() {
+      public void handle(HttpServerRequest req) {
+        String trainId = req.params().get("trainId");
+        container.logger().warn("Handling a request for /reset/" + trainId);
+        req.response().putHeader("Content-Type", "application/json");
+        if (data.has(trainId)) {
+          JsonObject trainData = data.get(trainId).getAsJsonObject();
+
+          for (Map.Entry<String, JsonElement> entry : trainData.getAsJsonObject("seats").entrySet()) {
+            String seat = entry.getKey();
+            trainData.getAsJsonObject("seats").getAsJsonObject(seat).addProperty("booking_reference", "");
+          }
+
+          req.response().end(prettyJsonFrom(data.get(trainId)));
+        } else {
+          error(req.response(), String.format("Train with ID %s was not found", trainId), NOT_FOUND);
+        }
+      }
+    });
 
     vertx.createHttpServer().requestHandler(rm).listen(8081);
   }
-  //
-  //  @Override
-  //  def start() {
-  //
-  //    /*
-  //     To reserve seats on a train, you'll need to make a POST request to this url:
-  //     http://localhost:8081/reserve
-  //     and attach form data for which seats to reserve. There should be three fields:
-  //     "train_id", "seats", "booking_reference"
-  //     The "seats" field should be a json encoded list of seat ids, for example:
-  //     '["1A", "2A"]'
-  //     The other two fields are ordinary strings. Note the server will prevent you
-  //     from booking a seat that is already reserved with another booking reference.
-  //     */
-  //    rm.post('/reserve') {
-  //      HttpServerRequest req ->
-  //        // Handle a multipart form submission
-  //        req.expectMultiPart = true
-  //        req.endHandler {
-  //          def attrs = req.formAttributes
-  //          String trainId = attrs['train_id']
-  //          String seatsJson = attrs['seats']
-  //          String bookingRef = attrs['booking_reference']
-  //
-  //          req.response.putHeader("Content-Type", "application/json")
-  //
-  //          // Validate the request
-  //          if (emptyOrNull(trainId, seatsJson, bookingRef)) {
-  //            jsonError(req.response,
-  //              "One or more request attributes missing: [train_id='$trainId', seats='$seatsJson', booking_reference='$bookingRef']",
-  //              BAD_REQUEST)
-  //            return
-  //          } else if (!data.containsKey(trainId)) {
-  //            jsonError(req.response, "train_id '$trainId' Not Found", NOT_FOUND)
-  //            return
-  //          }
-  //
-  //
-  //          def dataForTrain = data[trainId]
-  //          def seats = jsonSlurper.parseText(seatsJson)
-  //
-  //          // Validate the reservation details
-  //          for (String seat : seats) {
-  //            if (dataForTrain['seats'].containsKey(seat)) {
-  //              def existingReservation = dataForTrain["seats"][seat]["booking_reference"]
-  //              if (existingReservation != '' && existingReservation != bookingRef) {
-  //                jsonError(req.response, "$seat on $trainId already booked with reference:  ${bookingRef}", CONFLICT)
-  //                return
-  //              }
-  //            } else {
-  //              jsonError(req.response, "seat not found ${seat}", NOT_FOUND)
-  //              return
-  //            }
-  //          }
-  //
-  //          // Update the reservation data
-  //          seats.each { data[trainId]["seats"][it]["booking_reference"] = bookingRef }
-  //
-  //          req.response.end prettyJsonFrom(data[trainId])
-  //        }
-  //    }
-  //
-  //    /*
-  //     Remove all reservations on a particular train. Use it with care:
-  //     http://localhost:8081/reset/express_2000
-  //     */
-  //    rm.get("/reset/:trainId") {
-  //      HttpServerRequest req ->
-  //        req.response.putHeader("Content-Type", "application/json")
-  //        def trainId = req.params.get('trainId')
-  //        if (data.containsKey(trainId)) {
-  //          for (String seat : data[trainId]["seats"].keySet()) {
-  //            data[trainId]["seats"][seat]["booking_reference"] = ''
-  //          }
-  //          req.response.end JsonOutput.prettyPrint(JsonOutput.toJson(data[trainId]))
-  //        } else {
-  //          jsonError(req.response, "train_id '$trainId' Not Found", NOT_FOUND)
-  //        }
-  //    }
-  //
-  //    vertx.createHttpServer().requestHandler(rm.asClosure()).listen(8081)
-  //  }
-  //
-  //  static def emptyOrNull(String... things) { things.any { it == null || it.trim() == '' } }
-  //
-  //  static def prettyJsonFrom(data) { JsonOutput.prettyPrint(JsonOutput.toJson(data)) }
-  //
-  //  static def jsonError(HttpServerResponse resp, String message, int statusCode) {
-  //    resp.statusCode = statusCode
-  //    resp.end prettyJsonFrom(['error': message])
-  //  }
 
 
   private static boolean emptyOrNull(String... things) {
@@ -211,7 +159,8 @@ public class TrainDataService extends Verticle {
     return false;
   }
 
-  private static void error(HttpServerResponse resp, String message, int statusCode) {
+  private void error(HttpServerResponse resp, String message, int statusCode) {
+    container.logger().error("ERROR: "+ message + " [" + statusCode + "]");
     resp.setStatusCode(statusCode);
     JsonObject error = new JsonObject();
     error.addProperty("error", message);
@@ -222,18 +171,13 @@ public class TrainDataService extends Verticle {
     return new GsonBuilder().setPrettyPrinting().create().toJson(data);
   }
 
-  private static JsonObject readTrainData() {
+  private JsonObject readTrainData() {
     try {
-
       JsonParser jsonParser = new JsonParser();
       return jsonParser.parse(new FileReader("src/main/resources/trains.json")).getAsJsonObject();
     } catch (FileNotFoundException e) {
-      e.printStackTrace();
+      container.logger().fatal("Couldn't read in JSON data for trains", e);
     }
     return null;
-  }
-
-  private static void log(String message) {
-    System.out.println(message);
   }
 }

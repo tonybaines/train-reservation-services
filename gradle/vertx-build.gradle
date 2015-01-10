@@ -152,7 +152,6 @@ def doInit() {
 }
 
 def setSysProps() {
-  System.setProperty("vertx.clusterManagerFactory", "org.vertx.java.spi.cluster.impl.hazelcast.HazelcastClusterManagerFactory")
   System.setProperty("vertx.mods", "${project.buildDir}/mods")
 }
 
