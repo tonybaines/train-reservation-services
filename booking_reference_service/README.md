@@ -1,0 +1,6 @@
+# How to run the service
+Just run 
+* Windows `gradlew.bat`
+* Unix `./gradlew`
+
+N.B. the service keeps running, so if you need to run two services you'll need two terminals

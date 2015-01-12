@@ -1,0 +1,7 @@
+
+
+task zip(type: Zip) {
+  from '.'
+  baseName = "${project.name}"
+  includes = ['src/**', 'build.gradle', 'gradle/**', 'gradlew*', 'README*']
+}
