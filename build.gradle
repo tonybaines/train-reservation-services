@@ -3,5 +3,11 @@
 task zip(type: Zip) {
   from '.'
   baseName = "${project.name}"
-  includes = ['src/**', 'build.gradle', 'gradle/**', 'gradlew*', 'README*']
+  includes = [
+    'booking_reference_service/src/**', 'booking_reference_service/build.gradle', 'booking_reference_service/gradle/**', 'booking_reference_service/gradle*', 'booking_reference_service/README*',
+    'train_data_service/src/**', 'train_data_service/build.gradle', 'train_data_service/gradle/**', 'train_data_service/gradle*', 'train_data_service/README*',
+    'examples/src/**', 'examples/build.gradle', 'examples/gradle/**', 'examples/gradle*', 'examples/README*',
+//    'service-tests/src/**', 'service-tests/build.gradle',
+    'gradle/**'
+  ]
 }
