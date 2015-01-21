@@ -1,0 +1,86 @@
+# Train Data API
+
+## Retrieve information about a train service
+
+**GET:/data_for_train/<trainId>**
+
+e.g. a GET to `http://127.0.0.1:8081/data_for_train/local_1000` would return a status of `200` with
+```
+"local_1000": {
+    "coaches": [
+      {
+        "coach": "A",
+        "seats": [
+          {
+            "seat_number": "1",
+            "booking_reference": ""
+          },
+          {
+            "seat_number": "2",
+            "booking_reference": ""
+          },
+          {
+            "seat_number": "3",
+            "booking_reference": ""
+          },
+          {
+            "seat_number": "4",
+            "booking_reference": ""
+          }
+        ]
+      },
+      {
+        "coach": "B",
+        "seats": [
+          {
+            "seat_number": "1",
+            "booking_reference": ""
+          },
+          {
+            "seat_number": "2",
+            "booking_reference": ""
+          },
+          {
+            "seat_number": "3",
+            "booking_reference": ""
+          },
+          {
+            "seat_number": "4",
+            "booking_reference": ""
+          }
+        ]
+      }
+    ]
+  }
+```
+
+If a train with the supplied ID isn't found then the service returns a `404` status and an error response
+```
+{
+    "error": "Train with ID foo_bar was not found"
+}
+```
+
+## Reserving Seats
+To reserve seats on a train, you'll need to make a POST request to this url:
+`http://127.0.0.1:8081/reserve`
+and attach form data for which seats to reserve. There should be three fields:
+`"train_id`, `seats`, `booking_reference`
+The `seats` field should be a json encoded list of seat ids, for example:
+`["1A", "2A"]`
+The other two fields are ordinary strings. Note the server will prevent you
+from booking a seat that is already reserved with another booking reference
+
+The response is the new state of the train with ID `train_id`
+
+Errors will be returned for invalid `train_id`, seats or when a seat is already booked (the whole reservation will fail in this case).
+
+## Clearing all reservations
+
+**GET:/reset/<trainId>**
+
+Remove all reservations on a particular train. Use it with care
+
+The response is the new state of the train with ID `train_id`
+
+An error will be returned for an invalid `train_id`
