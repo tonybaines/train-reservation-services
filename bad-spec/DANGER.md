@@ -1,3 +1,0 @@
-# DANGER!
-This is not the real spec for the train-data service, it is meant to be used to highlight the benefits of
-a design which decouples business logic from an external data model (when the spec and reality differ).
