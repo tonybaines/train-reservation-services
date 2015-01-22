@@ -1,0 +1,80 @@
+TicketOffice Service
+====================
+
+Summary
+-------
+
+The Ipswich Railway Company wants you to help it improve their online booking service.
+
+They’d like to be able to not only sell tickets online, but to decide exactly which seats should be reserved, at the
+time of booking.
+
+You’re working on the "TicketOffice" service, and your next task is to implement the feature for reserving seats on a
+particular train.
+
+Initially the company wants you to write a command line program which receives a reservation request and reserves the
+requested seats. As mentioned, the company plans to take the service online in the future, so you should design your
+classes with this in mind.
+
+*+NOTE: Do not implement any web-specific logic at this stage.+*
+
+Expected Input
+--------------
+
+The TicketOffice Service should be able to process a single booking request, which consists of:
+
+* the train the customer wants to reserve seats on
+* how many seats are required
+
+Booking Rules
+-------------
+
+The TicketOffice Service must adhere to the following rules regarding seat reservations:
+
+. For a train overall, no more than 70% of seats may be reserved in advance.
+. Ideally, no individual coach should have no more than 70% reserved seats either.
+. You must put all the seats for one reservation in the same coach.
+. Rule (3) may cause you to go over 70% for some coaches, hence violating rule (2). This is allowed, but only if the
+  proposed booking follows rule (1) i.e. you must not book more than 70% of seats for the whole train at any time.
+
+Expected Output
+---------------
+
+The TicketOffice Service should write the result of the booking request to the command line, detailing the reservation
+that has been made. A reservation consists of three fields;
+
+* the train id
+* the booking reference
+* the ids of the seats that have been reserved
+
+*+HINT: It is suggested that you use a java class to represent the reservation, with the three fields mentioned above.
+        This will help when redesigning the code, if and when the service is moved online.+*
+
+*Successful reservation: Suggested command line output*
+
+[source]
+--
+ You have successfully reserved your seats as follows:
+
+ Train: Express_2000
+ Seats: 1A, 1B
+ Booking Reference: 75bcd15
+--
+
+If it is not possible to find suitable seats to reserve, the reservation should instead consist of an empty list of
+seats and an empty string for the booking reference.
+
+*Unsuccessful reservation: Suggested command line output*
+
+[source]
+--
+> Unfortunately it has not been possible to reserve seats for the Express_2000 train.
+--
+
+Back-end Services
+-----------------
+Your program will make use of various back-end services to implement the reservation logic.
+
+See *README-SPEC.asciidoc* for further details.
+
+END.
