@@ -1,0 +1,13 @@
+= README
+How to get started
+
+* Unzip to your usual coding workspace **into a new, empty directory**
+* Run `./gradlew clean test` (`.\gradlew clean test` on Windows) to download and cache dependencies
+
+* If you're an Eclipse user
+** Run `./gradlew eclipse` or `.\gradlew eclipse`
+** Import the resulting project using File .. Import .. General -> Existing Projects into Workspace
+
+* If you're an IntellJ IDEA user, either
+** Import the project from the build.gradle using File .. Import Project .. and selecting the build.gradle file
+** Run `./gradlew idea` or `.\gradlew.bat` and open the project using File .. Open .. and selecting the directory where you extracted the zip file

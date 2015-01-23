@@ -11,3 +11,18 @@ task zip(type: Zip) {
     'gradle/**'
   ]
 }
+
+task stage1Zip(type: Zip) {
+  baseName = "train-booking-stage-1"
+  from('train-reservation') {
+    into 'train-reservation'
+    includes = [
+      'src/**', 'build.gradle', 'gradle/**', 'gradle*', 'README*',
+    ]
+  }
+
+  from('bad-spec') {
+    into 'train-reservation'
+    includes = ['README-SPEC.asciidoc']
+  }
+}
