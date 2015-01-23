@@ -9,7 +9,7 @@
 if "%OS%"=="Windows_NT" setlocal
 
 @rem Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
-set DEFAULT_JVM_OPTS=
+set DEFAULT_JVM_OPTS=-Dhttp.proxyHost=proxy.intra.bt.com -Dhttp.proxyPort=8080 -Dhttps.proxyHost=proxy.intra.bt.com -Dhttps.proxyPort=8080
 
 set DIRNAME=%~dp0
 if "%DIRNAME%" == "" set DIRNAME=.
