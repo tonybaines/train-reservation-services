@@ -1,5 +1,16 @@
-Train Data API
-==============
+Services
+=======
+
+== Booking Reference Service
+The booking reference service provides a unique reference each time it is called
+
+*+GET:/booking_reference+*
+
+e.g. GET to +http://127.0.0.1:8082/booking_reference+ might return *+123456+*
+
+There are no error responses
+
+== Train Data API
 
 Retrieve information about a train service
 ------------------------------------------
