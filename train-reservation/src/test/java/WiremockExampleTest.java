@@ -23,7 +23,7 @@ import com.mashape.unirest.http.exceptions.UnirestException;
  */
 public class WiremockExampleTest {
     @Rule
-    public WireMockRule wireMockRule = new WireMockRule(8081); // No-args constructor defaults to port 8080
+    public WireMockRule wireMockRule = new WireMockRule(9081); // No-args constructor defaults to port 8080
 
     @Test
     public void exampleTest() throws UnirestException {
@@ -34,7 +34,7 @@ public class WiremockExampleTest {
                         .withHeader("Content-Type", "text/plain")
                         .withBody("Hello World!")));
 
-        HttpResponse<String> response = Unirest.get("http://127.0.0.1:8081/my/resource").header("Accept", "text/plain").asString();
+        HttpResponse<String> response = Unirest.get("http://127.0.0.1:9081/my/resource").header("Accept", "text/plain").asString();
 
         assertThat(response.getStatus(), is(200));
         assertThat(response.getBody(), is("Hello World!"));

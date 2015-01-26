@@ -19,7 +19,7 @@ public class UnirestExamples {
 
 
             // Getting JSON responses
-            HttpResponse<JsonNode> jsonResponse = Unirest.get("http://127.0.0.1:8081/my-restful-service/resource/1").asJson();
+            HttpResponse<JsonNode> jsonResponse = Unirest.get("http://127.0.0.1:9081/my-restful-service/resource/1").asJson();
             jsonResponse.getStatus();
             jsonResponse.getStatusText();
             // ... working with JSON

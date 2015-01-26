@@ -6,7 +6,7 @@ The booking reference service provides a unique reference each time it is called
 
 *+GET:/booking_reference+*
 
-e.g. GET to +http://127.0.0.1:8082/booking_reference+ might return *+123456+*
+e.g. GET to +http://127.0.0.1:9082/booking_reference+ might return *+123456+*
 
 There are no error responses
 
@@ -17,7 +17,7 @@ Retrieve information about a train service
 
 *+GET:/data_for_train/<trainId>+*
 
-e.g. a GET to +http://127.0.0.1:8081/data_for_train/local_1000+ would return a status of +200+ with
+e.g. a GET to +http://127.0.0.1:9081/data_for_train/local_1000+ would return a status of +200+ with
 [source,javascript]
 ----
 "local_1000": {
@@ -79,7 +79,7 @@ If a train with the supplied ID isn't found then the service returns a +404+ sta
 Reserving Seats
 ---------------
 To reserve seats on a train, you'll need to make a POST request to this url:
-+http://127.0.0.1:8081/reserve+
++http://127.0.0.1:9081/reserve+
 and attach form data for which seats to reserve.
 
 There should be three fields:

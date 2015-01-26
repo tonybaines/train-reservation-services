@@ -28,7 +28,7 @@ public class TrainDataService extends Verticle {
 
     /*
     Get data for example about the train with id "express_2000" like this:
-    http://localhost:8081/data_for_train/express_2000
+    http://localhost:9081/data_for_train/express_2000
 
     this will return a json document with information about the seats that this train
     has. The document you get back will look for example like this:
@@ -56,7 +56,7 @@ public class TrainDataService extends Verticle {
 
     /*
     To reserve seats on a train, you'll need to make a POST request to this url:
-    http://localhost:8081/reserve
+    http://localhost:9081/reserve
     and attach form data for which seats to reserve. There should be three fields:
     "train_id", "seats", "booking_reference"
     The "seats" field should be a json encoded list of seat ids, for example:
@@ -126,7 +126,7 @@ public class TrainDataService extends Verticle {
 
     /*
     Remove all reservations on a particular train. Use it with care:
-    http://localhost:8081/reset/express_2000
+    http://localhost:9081/reset/express_2000
     */
     rm.get("/reset/:trainId", new Handler<HttpServerRequest>() {
       public void handle(HttpServerRequest req) {
@@ -148,7 +148,7 @@ public class TrainDataService extends Verticle {
       }
     });
 
-    vertx.createHttpServer().requestHandler(rm).listen(8081);
+    vertx.createHttpServer().requestHandler(rm).listen(9081);
   }
 
 

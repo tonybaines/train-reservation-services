@@ -21,7 +21,7 @@ public class TrainDataServiceIntegrationTest {
 
   @Test
   public void theTrainServiceReturnsJsonReservationInformationAboutATrain() throws Exception {
-    HttpResponse<JsonNode> trainDataResponse = Unirest.get("http://127.0.0.1:8081/data_for_train/express_2000").asJson();
+    HttpResponse<JsonNode> trainDataResponse = Unirest.get("http://127.0.0.1:9081/data_for_train/express_2000").asJson();
 
     assertThat(trainDataResponse.getStatus(), is(200));
     JsonNode resultJson = trainDataResponse.getBody();
@@ -30,19 +30,19 @@ public class TrainDataServiceIntegrationTest {
 
   @Test
   public void theTrainServiceReturnsAFailureIfTheTrainIdIsNotRecognised() throws Exception {
-    HttpResponse<JsonNode> trainDataResponse = Unirest.get("http://127.0.0.1:8081/data_for_train/UNKNOWN").asJson();
+    HttpResponse<JsonNode> trainDataResponse = Unirest.get("http://127.0.0.1:9081/data_for_train/UNKNOWN").asJson();
     expectingAnError(trainDataResponse, 404, is("Train with ID UNKNOWN was not found"));
   }
 
   @Test
   public void requestingAReservationWithNoAttributesGivesAnError() throws Exception {
-    HttpResponse<JsonNode> reservationResponse = Unirest.post("http://127.0.0.1:8081/reserve").asJson();
+    HttpResponse<JsonNode> reservationResponse = Unirest.post("http://127.0.0.1:9081/reserve").asJson();
     expectingAnError(reservationResponse, 400, startsWith("No multi-part form attributes supplied in the request body"));
   }
 
   @Test
   public void requestingAReservationWithoutValidParametersGivesAnError() throws Exception {
-    HttpResponse<JsonNode> reservationResponse = Unirest.post("http://127.0.0.1:8081/reserve").fields(new HashMap<String, Object>()).asJson();
+    HttpResponse<JsonNode> reservationResponse = Unirest.post("http://127.0.0.1:9081/reserve").fields(new HashMap<String, Object>()).asJson();
     expectingAnError(reservationResponse, 400, startsWith("One or more request attributes missing"));
   }
 
@@ -92,7 +92,7 @@ public class TrainDataServiceIntegrationTest {
     requestReservation(nextBookingRef(), "express_2000", "1A", "2B");
 
     // When all reservations are reset
-    HttpResponse<JsonNode> trainDataResponse = Unirest.get("http://127.0.0.1:8081/reset/express_2000").asJson();
+    HttpResponse<JsonNode> trainDataResponse = Unirest.get("http://127.0.0.1:9081/reset/express_2000").asJson();
 
     assertThat(trainDataResponse.getStatus(), is(200));
     expectNoReservations(trainDataResponse);
@@ -123,7 +123,7 @@ public class TrainDataServiceIntegrationTest {
       put("seats", seatsBuilder.toString());
       put("booking_reference", bookingRef);
     }};
-    return Unirest.post("http://127.0.0.1:8081/reserve").fields(params).asJson();
+    return Unirest.post("http://127.0.0.1:9081/reserve").fields(params).asJson();
   }
 
 
