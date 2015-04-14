@@ -11,12 +11,10 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.startsWith;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
-public class TrainDataServiceIntegrationTest {
+public class TrainDataService_v1_IntegrationTest {
   private int bookingRef = 9000;
 
   @Test
