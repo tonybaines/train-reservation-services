@@ -23,7 +23,7 @@ public class TrainDataService_v1_IntegrationTest {
 
     assertThat(trainDataResponse.getStatus(), is(200));
     JsonNode resultJson = trainDataResponse.getBody();
-    assertThat(resultJson.getObject().get("seats"), is(notNullValue()));
+    assertThat(resultJson.getObject().get("coaches"), is(notNullValue()));
   }
 
   @Test

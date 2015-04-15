@@ -32,10 +32,33 @@ public class TrainDataService extends Verticle {
 
     this will return a json document with information about the seats that this train
     has. The document you get back will look for example like this:
-    {"seats": {
-      "1A": {"booking_reference": "", "seat_number": "1", "coach": "A"},
-      "2A": {"booking_reference": "", "seat_number": "2", "coach": "A"}
-    }}
+    {
+    "coaches": [
+      {
+        "coach": "A",
+        "seats": [
+          {
+            "seat_number": "1",
+            "booking_reference": "1"
+          },
+          {
+            "seat_number": "1",
+            "booking_reference": "1"
+          }
+        ]
+      },
+      {
+        "coach": "B",
+        "seats": [
+          {
+            "seat_number": "1",
+            "booking_reference": ""
+          }
+        ]
+      }
+    ]
+  }
+
 
     Note I've left out all the extraneous details about where the train is going to and
     from, at what time, whether there's a buffet car etc. All that's there is which seats
@@ -95,6 +118,14 @@ public class TrainDataService extends Verticle {
               Iterator<JsonElement> seatsIterator = seats.iterator();
               while (seatsIterator.hasNext()) {
                 String seat = seatsIterator.next().getAsString();
+
+
+              }
+
+              // Validate the reservation details
+              Iterator<JsonElement> seatsIterator = seats.iterator();
+              while (seatsIterator.hasNext()) {
+                String seat = seatsIterator.next().getAsString();
                 if (trainData.getAsJsonObject("seats").has(seat)) {
                   String existingReservation = trainData.getAsJsonObject("seats").getAsJsonObject(seat).get("booking_reference").getAsString();
                   if (!"".equals(existingReservation) && !(existingReservation.equals(bookingRef))) {
@@ -149,6 +180,34 @@ public class TrainDataService extends Verticle {
     });
 
     vertx.createHttpServer().requestHandler(rm).listen(9081);
+  }
+
+  private String seatNumFrom(String seat) {
+    return seat.replaceAll("[A-Z]+", "");
+  }
+
+  private String coachFrom(String seat) {
+    return seat.replaceAll("\\d+", "");
+  }
+
+  private JsonObject findSeat(JsonElement trainData, String requestedSeat) {
+    String coachId = coachFrom(requestedSeat);
+    String seatNum = seatNumFrom(requestedSeat);
+    JsonArray coachesData = trainData.get("coaches");
+    Iterator<JsonElement> coachesIterator = coachesData.iterator();
+    while (coachesIterator.hasNext()) {
+      JsonObject coach = coachesIterator.next().getAsJsonObject();
+      if (coach.get("coach").getAsString().equals(coachId)) {
+        JsonArray seatsData = coach.getAsJsonArray("seats");
+        Iterator<JsonElement> seatsDataIterator = seatsData.iterator();
+        while (seatsDataIterator.hasNext()) {
+          JsonObject seat = seatsDataIterator.next().getAsJsonObject();
+          if (seat.get("seat_number").getAsString().equals(seatNum)) {
+            return seat;
+          }
+        }
+      }
+    }
   }
 
 
