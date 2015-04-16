@@ -5,10 +5,12 @@ import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import org.hamcrest.Matcher;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Test;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.*;
@@ -98,9 +100,14 @@ public class TrainDataService_v1_IntegrationTest {
 
   private static void expectNoReservations(HttpResponse<JsonNode> response) {
     JsonNode resultJson = response.getBody();
-    JSONObject seats = resultJson.getObject().getJSONObject("seats");
-    for (Object seat : seats.keySet()) {
-      assertThat(seats.getJSONObject((String)seat).getString("booking_reference"), is(""));
+    JSONArray coachesData = resultJson.getObject().getJSONArray("coaches");
+
+    for(int i=0; i< coachesData.length(); i++) {
+      JSONObject coach =  coachesData.getJSONObject(i);
+        JSONArray seatsData = coach.getJSONArray("seats");
+        for (int j = 0; j < seatsData.length(); j++) {
+          assertThat(seatsData.getJSONObject(j).getString("booking_reference"), is(""));
+        }
     }
   }
 
@@ -126,7 +133,7 @@ public class TrainDataService_v1_IntegrationTest {
 
 
   private static void expectSeatToBeReserved(HttpResponse<JsonNode> reservationResponse, String seat, Matcher<String >matcher) {
-    assertThat(reservationResponse.getBody().getObject().getJSONObject("seats").getJSONObject(seat).getString("booking_reference"), matcher);
+    assertThat(findSeat(reservationResponse.getBody().getObject(), seat).getString("booking_reference"), matcher);
   }
 
   private static void expectingAnError(HttpResponse<JsonNode> response, int statusCode, Matcher<String> matcher) {
@@ -135,4 +142,33 @@ public class TrainDataService_v1_IntegrationTest {
     assertThat(response.getStatus(), is(statusCode));
     assertThat(errorMessage, matcher);
   }
+  private static String seatNumFrom(String seat) {
+    return seat.replaceAll("[A-Z]+", "");
+  }
+
+  private static String coachFrom(String seat) {
+    return seat.replaceAll("\\d+", "");
+  }
+
+  private static JSONObject findSeat(JSONObject trainData, String requestedSeat) {
+    String coachId = coachFrom(requestedSeat);
+    String seatNum = seatNumFrom(requestedSeat);
+    JSONArray coachesData = trainData.getJSONArray("coaches");
+
+    for(int i=0; i< coachesData.length(); i++) {
+      JSONObject coach =  coachesData.getJSONObject(i);
+      if (coach.getString("coach").equals(coachId)) {
+        JSONArray seatsData = coach.getJSONArray("seats");
+        for (int j = 0; j < seatsData.length(); j++) {
+          JSONObject seat = seatsData.getJSONObject(j);
+          if (seat.getString("seat_number").equals(seatNum)) {
+            return seat;
+          }
+        }
+      }
+    }
+    throw new IllegalArgumentException(String.format("seat not found %s", requestedSeat));
+  }
+
+
 }

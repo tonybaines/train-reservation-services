@@ -1,6 +1,7 @@
 package trains.data;
 
 import com.google.gson.*;
+import com.google.gson.annotations.SerializedName;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.MultiMap;
 import org.vertx.java.core.VoidHandler;
@@ -118,22 +119,10 @@ public class TrainDataService extends Verticle {
               Iterator<JsonElement> seatsIterator = seats.iterator();
               while (seatsIterator.hasNext()) {
                 String seat = seatsIterator.next().getAsString();
-
-
-              }
-
-              // Validate the reservation details
-              Iterator<JsonElement> seatsIterator = seats.iterator();
-              while (seatsIterator.hasNext()) {
-                String seat = seatsIterator.next().getAsString();
-                if (trainData.getAsJsonObject("seats").has(seat)) {
-                  String existingReservation = trainData.getAsJsonObject("seats").getAsJsonObject(seat).get("booking_reference").getAsString();
-                  if (!"".equals(existingReservation) && !(existingReservation.equals(bookingRef))) {
-                    error(req.response(), String.format("%s on %s is already booked with reference:  %s", seat, trainId, bookingRef), CONFLICT);
-                    return;
-                  }
-                } else {
-                  error(req.response(), String.format("seat not found %s", seat), NOT_FOUND);
+                JsonObject requestedSeat = findSeat(trainData, seat);
+                String existingReservation = requestedSeat.get("booking_reference").getAsString();
+                if (!"".equals(existingReservation) && !(existingReservation.equals(bookingRef))) {
+                  error(req.response(), String.format("%s on %s is already booked with reference:  %s", seat, trainId, bookingRef), CONFLICT);
                   return;
                 }
               }
@@ -142,13 +131,15 @@ public class TrainDataService extends Verticle {
               seatsIterator = seats.iterator();
               while (seatsIterator.hasNext()) {
                 String seat = seatsIterator.next().getAsString();
-                trainData.getAsJsonObject("seats").getAsJsonObject(seat).addProperty("booking_reference", bookingRef);
+                findSeat(trainData, seat).addProperty("booking_reference", bookingRef);
               }
 
               req.response().end(prettyJsonFrom(data.get(trainId)));
             } catch (IllegalStateException e) {
               // This is a difficult error to diagnose from the client otherwise
               error(req.response(), "No multi-part form attributes supplied in the request body", BAD_REQUEST);
+            } catch (IllegalArgumentException e) {
+              error(req.response(), e.getMessage(), NOT_FOUND);
             }
           }
         });
@@ -167,9 +158,13 @@ public class TrainDataService extends Verticle {
         if (data.has(trainId)) {
           JsonObject trainData = data.get(trainId).getAsJsonObject();
 
-          for (Map.Entry<String, JsonElement> entry : trainData.getAsJsonObject("seats").entrySet()) {
-            String seat = entry.getKey();
-            trainData.getAsJsonObject("seats").getAsJsonObject(seat).addProperty("booking_reference", "");
+          JsonArray coachesData = trainData.getAsJsonObject().get("coaches").getAsJsonArray();
+          for (JsonElement aCoachesData : coachesData) {
+            JsonObject coach = aCoachesData.getAsJsonObject();
+            JsonArray seatsData = coach.getAsJsonArray("seats");
+            for (JsonElement aSeatsData : seatsData) {
+              aSeatsData.getAsJsonObject().addProperty("booking_reference", "");
+            }
           }
 
           req.response().end(prettyJsonFrom(data.get(trainId)));
@@ -193,21 +188,20 @@ public class TrainDataService extends Verticle {
   private JsonObject findSeat(JsonElement trainData, String requestedSeat) {
     String coachId = coachFrom(requestedSeat);
     String seatNum = seatNumFrom(requestedSeat);
-    JsonArray coachesData = trainData.get("coaches");
-    Iterator<JsonElement> coachesIterator = coachesData.iterator();
-    while (coachesIterator.hasNext()) {
-      JsonObject coach = coachesIterator.next().getAsJsonObject();
+    JsonArray coachesData = trainData.getAsJsonObject().get("coaches").getAsJsonArray();
+    for (JsonElement aCoachesData : coachesData) {
+      JsonObject coach = aCoachesData.getAsJsonObject();
       if (coach.get("coach").getAsString().equals(coachId)) {
         JsonArray seatsData = coach.getAsJsonArray("seats");
-        Iterator<JsonElement> seatsDataIterator = seatsData.iterator();
-        while (seatsDataIterator.hasNext()) {
-          JsonObject seat = seatsDataIterator.next().getAsJsonObject();
+        for (JsonElement aSeatsData : seatsData) {
+          JsonObject seat = aSeatsData.getAsJsonObject();
           if (seat.get("seat_number").getAsString().equals(seatNum)) {
             return seat;
           }
         }
       }
     }
+    throw new IllegalArgumentException(String.format("seat not found %s", requestedSeat));
   }
 
 
