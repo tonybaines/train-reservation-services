@@ -5,7 +5,8 @@ task zip(type: Zip) {
   baseName = "${project.name}"
   includes = [
     'booking_reference_service/src/**', 'booking_reference_service/build.gradle', 'booking_reference_service/gradle/**', 'booking_reference_service/gradle*', 'booking_reference_service/README*',
-    'train_data_service/src/**', 'train_data_service/build.gradle', 'train_data_service/gradle/**', 'train_data_service/gradle*', 'train_data_service/README*',
+    'train_data_service_v1/src/**', 'train_data_service_v1/build.gradle', 'train_data_service_v1/gradle/**', 'train_data_service_v1/gradle*', 'train_data_service_v1/README*',
+    'train_data_service_v2/src/**', 'train_data_service_v2/build.gradle', 'train_data_service_v2/gradle/**', 'train_data_service_v2/gradle*', 'train_data_service_v2/README*',
     'examples/src/**', 'examples/build.gradle', 'examples/gradle/**', 'examples/gradle*', 'examples/README*',
 //    'service-tests/src/**', 'service-tests/build.gradle',
     'gradle/**'
@@ -19,10 +20,5 @@ task stage1Zip(type: Zip) {
     includes = [
       'src/**', 'build.gradle', 'gradle/**', 'gradle*', 'README*',
     ]
-  }
-
-  from('bad-spec') {
-    into 'train-reservation'
-    includes = ['README-SPEC.asciidoc']
   }
 }

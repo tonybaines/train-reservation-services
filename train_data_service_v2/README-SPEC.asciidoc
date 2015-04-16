@@ -1,5 +1,5 @@
 Services
-=======
+========
 
 == Booking Reference Service
 The booking reference service provides a unique reference each time it is called
@@ -15,57 +15,32 @@ There are no error responses
 Retrieve information about a train service
 ------------------------------------------
 
+WARNING: This structure has changed in this v2 release of the service!
+
 *+GET:/data_for_train/<trainId>+*
 
 e.g. a GET to +http://127.0.0.1:9081/data_for_train/local_1000+ would return a status of +200+ with
 [source,javascript]
 ----
-{
-    "coaches": [
-      {
-        "coach": "A",
-        "seats": [
-          {
-            "seat_number": "1",
-            "booking_reference": ""
-          },
-          {
-            "seat_number": "2",
-            "booking_reference": ""
-          },
-          {
-            "seat_number": "3",
-            "booking_reference": ""
-          },
-          {
-            "seat_number": "4",
-            "booking_reference": ""
-          }
-        ]
-      },
-      {
-        "coach": "B",
-        "seats": [
-          {
-            "seat_number": "1",
-            "booking_reference": ""
-          },
-          {
-            "seat_number": "2",
-            "booking_reference": ""
-          },
-          {
-            "seat_number": "3",
-            "booking_reference": ""
-          },
-          {
-            "seat_number": "4",
-            "booking_reference": ""
-          }
-        ]
-      }
-    ]
-  }
+{ "seats" : {"1A": { "coach" : "A", "seat_number" : "1", "booking_reference" : ""},
+             "2A": { "coach" : "A", "seat_number" : "2", "booking_reference" : ""},
+             "3A": { "coach" : "A", "seat_number" : "3", "booking_reference" : ""},
+             "4A": { "coach" : "A", "seat_number" : "4", "booking_reference" : ""},
+             "1B": { "coach" : "B", "seat_number" : "1", "booking_reference" : ""},
+             "2B": { "coach" : "B", "seat_number" : "2", "booking_reference" : ""},
+             "3B": { "coach" : "B", "seat_number" : "3", "booking_reference" : ""},
+             "4B": { "coach" : "B", "seat_number" : "4", "booking_reference" : ""},
+             "5B": { "coach" : "B", "seat_number" : "5", "booking_reference" : ""},
+             "6B": { "coach" : "B", "seat_number" : "6", "booking_reference" : ""},
+             "7B": { "coach" : "B", "seat_number" : "7", "booking_reference" : ""},
+             "8B": { "coach" : "B", "seat_number" : "8", "booking_reference" : ""},
+             "1C": { "coach" : "C", "seat_number" : "1", "booking_reference" : ""},
+             "2C": { "coach" : "C", "seat_number" : "2", "booking_reference" : ""},
+             "3C": { "coach" : "C", "seat_number" : "3", "booking_reference" : ""},
+             "4C": { "coach" : "C", "seat_number" : "4", "booking_reference" : ""}
+           }
+}
+
 ----
 
 If a train with the supplied ID isn't found then the service returns a +404+ status and an error response

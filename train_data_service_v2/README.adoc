@@ -1,5 +1,6 @@
-# How to run the service
+== How to run the service
 Just run 
+
 * Windows `gradlew.bat`
 * Unix `./gradlew`
 
